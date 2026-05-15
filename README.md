@@ -1,11 +1,73 @@
-<div align="center">
+# Mani AI - Full-Stack Production Assistant
 
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+A complete, production-ready AI application built with a modern tech stack. This project features a sophisticated AI chat interface, real-time analytics, and a professional SaaS-inspired UI.
 
-  <h1>Built with AI Studio</h2>
+## 🚀 Tech Stack
 
-  <p>The fastest path from prompt to production with Gemini.</p>
+- **Frontend**: React 19, Vite, Tailwind CSS, Framer Motion, Chart.js
+- **Backend**: Node.js, Express, Gemini 3.1 Pro (via @google/genai)
+- **Database/Auth**: Firebase Firestore, Firebase Authentication
+- **Monitoring**: Morgan (logging), Helmet (security), Express Rate Limit
 
-  <a href="https://aistudio.google.com/apps">Start building</a>
+## ✨ Key Features
 
-</div>
+- **End-to-End AI Integration**: Securely calls Google Gemini API from the backend.
+- **Dynamic Analytics**: Visualizes system usage and AI performance with Chart.js.
+- **Professional SaaS UI**: Responsive sidebar, dark-mode-first aesthetic, and glassmorphism.
+- **Rich AI Responses**: Markdown rendering, syntax highlighting for code, and copy-to-clipboard.
+- **Secure Auth**: Support for Google and Email/Password authentication.
+- **History Management**: Export chat histories and manage sessions.
+
+## 🛠️ Getting Started
+
+### 1. Prerequisites
+
+- Node.js (v18+)
+- Firebase Project
+- Gemini API Key (from Google AI Studio)
+
+### 2. Environment Variables & Config
+
+1. Create a `.env` file in the root (see `.env.example`):
+   ```env
+   GEMINI_API_KEY=your_key_here
+   ```
+
+2. Create `firebase-applet-config.json` in the root (see `firebase-applet-config.json.example`):
+   - Get these values from your Firebase Console (Project Settings > General > Your apps).
+   - `firestoreDatabaseId` is typically `(default)` unless you created a named database.
+
+### 3. Installation
+
+```bash
+npm install
+```
+
+### 4. Development
+
+```bash
+npm run dev
+```
+
+### 5. Build for Production
+
+```bash
+npm run build
+```
+
+## 📦 Deployment
+
+### Frontend (Vercel)
+1. Push to GitHub.
+2. Link repository to Vercel.
+3. Configure environment variables.
+4. Set build command to `npm run build` and output directory to `dist`.
+
+### Backend (Render)
+1. Create a "Web Service" on Render.
+2. Link repository.
+3. Use `npm run start` as the start command.
+4. Add your Gemini and Firebase secrets.
+
+## 📄 License
+SPDX-License-Identifier: Apache-2.0

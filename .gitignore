@@ -1,0 +1,12 @@
+node_modules/
+build/
+dist/
+coverage/
+.DS_Store
+*.log
+.env*
+!.env.example
+firebase-applet-config.json
+firebase-blueprint.json
+security_spec.md
+DRAFT_firestore.rules

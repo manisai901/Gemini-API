@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { Sparkles, Github, Mail, ArrowRight, Loader2 } from 'lucide-react';
+import { Logo } from '../components/Logo';
+import { Github, Mail, ArrowRight, Loader2 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { useToastStore } from '../store/toastStore';
 import { auth, googleProvider } from '../lib/firebase';
@@ -23,6 +24,13 @@ export default function Auth() {
   const { setUser } = useAuthStore();
   const { addToast } = useToastStore();
   const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuthStore();
+
+  useEffect(() => {
+    if (user && !authLoading) {
+      navigate('/chat');
+    }
+  }, [user, authLoading, navigate]);
 
   const handleFirestoreError = (error: any, operation: string, path: string) => {
     const errInfo = {
@@ -77,12 +85,24 @@ export default function Auth() {
         addToast('Account created successfully!', 'success');
       }
       
-      await syncUserToFirestore(userCredential.user);
-      navigate('/dashboard');
+      try {
+        await syncUserToFirestore(userCredential.user);
+      } catch (err) {
+        console.warn('Silent Firestore sync error:', err);
+      }
+      
+      setUser({
+        uid: userCredential.user.uid,
+        email: userCredential.user.email,
+        displayName: userCredential.user.displayName || name,
+        photoURL: userCredential.user.photoURL
+      });
+      
+      navigate('/chat');
     } catch (error: any) {
       console.error('Auth error:', error);
       if (error.code === 'auth/operation-not-allowed') {
-        addToast('Sign-in method not enabled. Please enable Email/Password in Firebase Console.', 'error');
+        addToast('Login method not enabled in Firebase. Please go to Firebase Console > Authentication > Sign-in method and enable Email/Password and Google.', 'error');
       } else if (error.code === 'auth/email-already-in-use') {
         addToast('This email is already in use. Try signing in instead.', 'error');
       } else if (error.message.includes('Missing or insufficient permissions')) {
@@ -100,8 +120,16 @@ export default function Auth() {
     try {
       const result = await signInWithPopup(auth, googleProvider);
       await syncUserToFirestore(result.user);
+      
+      setUser({
+        uid: result.user.uid,
+        email: result.user.email,
+        displayName: result.user.displayName,
+        photoURL: result.user.photoURL
+      });
+      
       addToast('Successfully signed in with Google!', 'success');
-      navigate('/dashboard');
+      navigate('/chat');
     } catch (error: any) {
       console.error('Google Auth error:', error);
       if (error.message.includes('Missing or insufficient permissions')) {
@@ -115,21 +143,22 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-950 flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen bg-black flex flex-col items-center justify-center p-4 relative overflow-hidden">
+      <div className="absolute inset-0 bg-blueprint opacity-[0.03] pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_#4f46e520,transparent)] pointer-events-none" />
+      
       <motion.div 
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="w-full max-w-md"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full max-w-md relative z-10"
       >
         <div className="flex flex-col items-center mb-10">
-          <div className="w-16 h-16 rounded-2xl bg-indigo-600 flex items-center justify-center shadow-xl shadow-indigo-600/20 mb-4">
-            <Sparkles className="w-10 h-10 text-white" />
-          </div>
+          <Logo size="lg" className="mb-6" />
           <h1 className="text-3xl font-bold text-white tracking-tight">
             {isLogin ? 'Welcome Back' : 'Create Account'}
           </h1>
-          <p className="text-neutral-400 mt-2">
-            Professional AI assistance starts here
+          <p className="text-neutral-500 mt-2 text-sm">
+            Professional AI Engineering Framework
           </p>
         </div>
 

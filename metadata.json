@@ -1,6 +1,6 @@
 {
   "name": "Mani AI",
-  "description": "A production-ready full-stack AI assistant with real-time chat, analytics, and professional SaaS UI.",
+  "description": "Professional full-stack AI assistant with real-time chat, analytics, and high-performance technical capabilities.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

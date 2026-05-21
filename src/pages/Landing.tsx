@@ -1,28 +1,33 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { Sparkles, Cpu, Zap, Layout, Shield, ArrowRight } from 'lucide-react';
+import { Cpu, Zap, Layout, Shield, ArrowRight, Sparkles } from 'lucide-react';
+import { Logo } from '../components/Logo';
 import { cn } from '../lib/utils';
+import { useAuthStore } from '../store/authStore';
 
 export default function Landing() {
+  const navigate = useNavigate();
+  const { user, loading } = useAuthStore();
+
+  useEffect(() => {
+    if (user && !loading) {
+      navigate('/chat');
+    }
+  }, [user, loading, navigate]);
   return (
-    <div className="min-h-screen bg-neutral-950 text-neutral-100 selection:bg-indigo-500/30 overflow-hidden relative">
-      <div className="absolute inset-0 bg-blueprint opacity-40 pointer-events-none" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-indigo-500/10 via-transparent to-transparent pointer-events-none" />
+    <div className="min-h-screen bg-black text-neutral-100 selection:bg-indigo-500/30 overflow-hidden relative">
+      <div className="absolute inset-0 bg-blueprint opacity-[0.03] pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_#1e1b4b,transparent)] opacity-40 pointer-events-none" />
       
       {/* Navigation */}
-      <nav className="fixed top-0 w-full z-50 border-b border-neutral-800/50 bg-neutral-950/80 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-xl font-bold tracking-tight">Mani AI</span>
-          </div>
-          <div className="flex items-center gap-6">
-            <Link to="/login" className="text-sm font-medium text-neutral-400 hover:text-white transition-colors">Sign In</Link>
-            <Link to="/login" className="px-4 py-2 bg-white text-black text-sm font-semibold rounded-full hover:bg-neutral-200 transition-colors">
-              Get Started
+      <nav className="fixed top-0 w-full z-50 border-b border-neutral-900 bg-black/60 backdrop-blur-xl">
+        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+          <Logo />
+          <div className="flex items-center gap-8">
+            <Link to="/login" className="text-sm font-semibold text-neutral-400 hover:text-white transition-colors">Sign In</Link>
+            <Link to="/login" className="px-6 py-2.5 bg-white text-black text-sm font-bold rounded-full hover:bg-neutral-200 transition-all hover:scale-105 active:scale-95 shadow-xl shadow-white/5">
+              Start Free
             </Link>
           </div>
         </div>

@@ -7,14 +7,33 @@
 
 @layer base {
   body {
-    @apply bg-neutral-950 text-neutral-100 antialiased;
+    @apply bg-black text-neutral-100 antialiased selection:bg-indigo-500/30;
   }
 }
 
 @layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
   .bg-grid-white {
-    background-image: radial-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+    background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
     background-size: 24px 24px;
+  }
+
+  .animate-gradient {
+    background-size: 200% auto;
+    animation: gradient 4s linear infinite;
+  }
+
+  @keyframes gradient {
+    0% { background-position: 0% center; }
+    50% { background-position: 100% center; }
+    100% { background-position: 0% center; }
   }
   
   .bg-blueprint {

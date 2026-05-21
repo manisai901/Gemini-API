@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
+import { Logo } from './Logo';
 import { 
-  Sparkles, 
   LayoutDashboard, 
   MessageSquare, 
   Settings, 
@@ -11,7 +11,8 @@ import {
   User,
   Mail,
   Plus,
-  Clock as ClockIcon
+  Clock as ClockIcon,
+  Trash2
 } from 'lucide-react';
 
 const DateTimeDisplay = () => {
@@ -52,7 +53,9 @@ const DateTimeDisplay = () => {
 import { cn } from '../lib/utils';
 import { useAuthStore } from '../store/authStore';
 import { useToastStore } from '../store/toastStore';
-import { useChatStore } from '../store/chatStore';
+import { useChatStore, Session } from '../store/chatStore';
+import { auth, db } from '../lib/firebase';
+import { collection, query, orderBy, onSnapshot, deleteDoc, doc } from 'firebase/firestore';
 
 interface SidebarItemProps {
   to: string;
@@ -81,14 +84,51 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
   const { user, setUser } = useAuthStore();
   const navigate = useNavigate();
+  const { sessions, setSessions, currentSessionId, setCurrentSessionId, clearChat } = useChatStore();
+  const { addToast } = useToastStore();
 
-  const handleLogout = () => {
-    // Firebase logout logic will go here
-    setUser(null);
-    navigate('/');
+  useEffect(() => {
+    if (!user) return;
+    
+    // Subscribe to sessions
+    const sessionsRef = collection(db, 'users', user.uid, 'sessions');
+    const q = query(sessionsRef, orderBy('updatedAt', 'desc'));
+    
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const loadedSessions = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Session[];
+      setSessions(loadedSessions);
+    });
+
+    return () => unsubscribe();
+  }, [user, setSessions]);
+
+  const handleLogout = async () => {
+    try {
+      await auth.signOut();
+      setUser(null);
+      navigate('/');
+      addToast('Signed out successfully', 'info');
+    } catch (err) {
+      addToast('Failed to sign out', 'error');
+    }
   };
 
-  const { addToast } = useToastStore();
+  const deleteSession = async (e: React.MouseEvent, sessionId: string) => {
+    e.stopPropagation();
+    if (!user) return;
+    try {
+      await deleteDoc(doc(db, 'users', user.uid, 'sessions', sessionId));
+      if (currentSessionId === sessionId) {
+        clearChat();
+      }
+      addToast('Chat deleted', 'info');
+    } catch (err) {
+      addToast('Failed to delete chat', 'error');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-black flex overflow-hidden">
@@ -110,34 +150,81 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
       {/* Sidebar */}
       <aside className={cn(
-        "fixed inset-y-0 left-0 z-[55] w-72 bg-neutral-950 border-r border-neutral-800/50 flex flex-col transition-transform duration-300 lg:translate-x-0 lg:static",
+        "fixed inset-y-0 left-0 z-[55] w-72 bg-[#0a0a0a] border-r border-neutral-900 flex flex-col transition-transform duration-300 lg:translate-x-0 lg:static",
         isOpen ? "translate-x-0" : "-translate-x-full"
       )}>
-        <div className="p-6">
-          <div className="flex items-center gap-3 mb-10">
-            <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-600/20">
-              <Sparkles className="w-6 h-6 text-white" />
-            </div>
-            <span className="text-xl font-bold tracking-tight text-white">Mani AI</span>
+        <div className="p-6 flex-1 flex flex-col min-h-0">
+          <div className="flex items-center gap-3 mb-8">
+            <Logo />
           </div>
 
           <button 
             onClick={() => {
-              useChatStore.getState().clearChat();
+              clearChat();
               navigate('/chat');
               setIsOpen(false);
-              addToast('New chat started', 'info');
+              addToast('Initiating new session', 'info');
             }}
-            className="w-full flex items-center gap-3 px-4 py-3 mb-6 rounded-xl text-sm font-medium bg-white text-black hover:bg-neutral-200 transition-all shadow-lg active:scale-95"
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 mb-8 rounded-xl text-sm font-semibold bg-white text-black hover:bg-neutral-200 transition-all shadow-[0_0_20px_rgba(255,255,255,0.05)] active:scale-95 group"
           >
-            <Plus className="w-5 h-5" />
+            <Plus className="w-4 h-4 transition-transform group-hover:rotate-90" />
             <span>New Chat</span>
           </button>
 
-          <nav className="space-y-2">
-            <SidebarItem to="/dashboard" icon={LayoutDashboard} label="Dashboard" onClick={() => setIsOpen(false)} />
-            <SidebarItem to="/chat" icon={MessageSquare} label="AI Assistant" onClick={() => setIsOpen(false)} />
-            <SidebarItem to="/settings" icon={Settings} label="Settings" onClick={() => setIsOpen(false)} />
+          <nav className="space-y-6 flex-1 overflow-y-auto no-scrollbar">
+            <div>
+              <div className="px-4 mb-3">
+                <span className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest">Main</span>
+              </div>
+              <div className="space-y-1">
+                <SidebarItem to="/chat" icon={MessageSquare} label="AI Chat" onClick={() => setIsOpen(false)} />
+                <SidebarItem to="/dashboard" icon={LayoutDashboard} label="Analytics" onClick={() => setIsOpen(false)} />
+                <SidebarItem to="/settings" icon={Settings} label="Preferences" onClick={() => setIsOpen(false)} />
+              </div>
+            </div>
+            
+            <div>
+              <div className="px-4 mb-3 flex items-center justify-between">
+                <span className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest">History</span>
+                <ClockIcon className="w-3 h-3 text-neutral-600" />
+              </div>
+              <div className="space-y-1">
+                {sessions.length === 0 ? (
+                   <div className="px-4 py-6 rounded-xl border border-dashed border-neutral-900 text-[10px] text-neutral-700 text-center uppercase tracking-wider font-bold">
+                     No chats yet
+                   </div>
+                ) : (
+                  sessions.map((session) => (
+                    <div 
+                      key={session.id}
+                      onClick={() => {
+                        clearChat();
+                        setCurrentSessionId(session.id);
+                        navigate('/chat');
+                        setIsOpen(false);
+                      }}
+                      className={cn(
+                        "group flex items-center gap-3 px-4 py-3 text-xs font-medium border cursor-pointer transition-all rounded-xl",
+                        currentSessionId === session.id 
+                          ? "bg-neutral-900 border-neutral-800 text-white" 
+                          : "border-transparent text-neutral-500 hover:bg-neutral-900/50 hover:text-neutral-300"
+                      )}
+                    >
+                      <MessageSquare className="w-4 h-4 opacity-50 shrink-0" />
+                      <div className="flex-1 min-w-0 pr-2">
+                        <span className="truncate block">{session.title || 'New Chat'}</span>
+                      </div>
+                      <button 
+                        onClick={(e) => deleteSession(e, session.id)}
+                        className="opacity-0 group-hover:opacity-100 p-1 text-neutral-500 hover:text-red-400 transition-opacity"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
           </nav>
         </div>
 
